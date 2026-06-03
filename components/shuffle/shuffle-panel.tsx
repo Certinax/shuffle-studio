@@ -5,6 +5,7 @@ import { ArrowUpRight, Loader2, Shuffle } from "lucide-react";
 import { toast } from "sonner";
 
 import { shufflePlaylist, type ShuffleActionState } from "@/lib/actions/shuffle";
+import { notifyShuffleStatsUpdated } from "@/lib/stats/client";
 import type { PlaylistDetails, PlaylistVisibility } from "@/lib/spotify/types";
 import { Button } from "@/components/ui/button";
 import {
@@ -65,6 +66,10 @@ export function ShufflePanel({
 
   useEffect(() => {
     if (state.status === "success") {
+      if (state.stats?.enabled) {
+        notifyShuffleStatsUpdated(state.stats);
+      }
+
       toast.success("Playlist created", {
         description: state.message,
         action: state.playlistUrl

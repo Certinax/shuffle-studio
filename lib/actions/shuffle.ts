@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { buildShuffledPlaylistName } from "@/lib/playlist-name";
+import { getSession } from "@/lib/session";
+import { recordShuffleEvent } from "@/lib/stats/shuffles";
 import { fisherYatesShuffle } from "@/lib/shuffle";
 import {
   addItemsToPlaylist,
@@ -20,6 +22,11 @@ export type ShuffleActionState = {
   message?: string;
   playlistName?: string;
   playlistUrl?: string;
+  stats?: {
+    enabled: boolean;
+    global?: number;
+    user?: number | null;
+  };
 };
 
 const shuffleSchema = z.object({
@@ -83,14 +90,28 @@ export async function shufflePlaylist(
 
     await addItemsToPlaylist(created.id, shuffledUris);
 
+    const session = await getSession();
+    const stats = session
+      ? await recordShuffleEvent({
+          spotifyUserId: session.user.id,
+          sourcePlaylistId: playlist.id,
+          sourcePlaylistName: playlist.name,
+          trackCount: tracks.length,
+        })
+      : null;
+
     revalidatePath("/playlists");
     revalidatePath(`/playlists/${parsed.data.playlistId}`);
+    revalidatePath("/");
 
     return {
       status: "success",
       message: `Created ${created.name} with ${tracks.length.toLocaleString()} tracks.`,
       playlistName: created.name,
       playlistUrl: created.spotifyUrl,
+      stats: stats
+        ? { enabled: true, global: stats.global, user: stats.user }
+        : { enabled: false },
     };
   } catch (error) {
     if (error instanceof SpotifyAuthError) {

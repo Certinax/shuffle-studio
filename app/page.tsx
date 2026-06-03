@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { ListMusic, LockKeyhole, Sparkles } from "lucide-react";
 
 import { AuthCta } from "@/components/home/auth-cta";
+import { HomeShuffleStats } from "@/components/shell/shuffle-stats";
 import { PageContainer } from "@/components/shell/page-container";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -27,6 +28,7 @@ export default function Home() {
             <AuthCta />
           </Suspense>
         </div>
+        <HomeShuffleStats />
       </section>
 
       <section className="mt-16 grid gap-4 md:grid-cols-3">

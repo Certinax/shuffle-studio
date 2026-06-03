@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { Shuffle } from "lucide-react";
 
 import { AuthGate, HeaderUserSkeleton } from "@/components/shell/auth-gate";
+import { GlobalShuffleStats } from "@/components/shell/shuffle-stats";
 
 export function AppHeader() {
   return (
@@ -14,6 +15,8 @@ export function AppHeader() {
           </span>
           <span className="font-semibold tracking-[-0.03em]">Shuffle Studio</span>
         </Link>
+
+        <GlobalShuffleStats />
 
         <Suspense fallback={<HeaderUserSkeleton />}>
           <AuthGate />

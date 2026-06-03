@@ -52,6 +52,16 @@ Open [http://127.0.0.1:3000](http://127.0.0.1:3000). Use `127.0.0.1` so the redi
 4. Add the production redirect URI in the Spotify Dashboard.
 5. Redeploy after changing env vars.
 
+## Shuffle stats (optional)
+
+To show studio-wide and per-user shuffle counters in the header and home page:
+
+1. Create a [Supabase](https://supabase.com) project.
+2. Run the SQL in `supabase/migrations/` — see `supabase/README.md`.
+3. Add **server-only** vars to `.env.local` (and Vercel) — see `supabase/README.md` for the service role key location.
+
+Counters stay hidden until `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are set. No Supabase keys are sent to the browser.
+
 ## Notes
 
 - The app never exposes the Spotify client secret or refresh token to browser JavaScript.

@@ -1,6 +1,7 @@
 import { UserMenu } from "@/components/shell/user-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getPublicSession } from "@/lib/session";
+import { getShuffleStats } from "@/lib/stats/shuffles";
 
 export async function AuthGate() {
   const session = await getPublicSession();
@@ -9,7 +10,14 @@ export async function AuthGate() {
     return null;
   }
 
-  return <UserMenu user={session.user} />;
+  const stats = await getShuffleStats(session.user.id);
+
+  return (
+    <UserMenu
+      user={session.user}
+      shuffleCount={stats.enabled ? stats.user : null}
+    />
+  );
 }
 
 export function HeaderUserSkeleton() {

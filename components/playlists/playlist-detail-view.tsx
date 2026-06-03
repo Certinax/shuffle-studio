@@ -42,8 +42,8 @@ function PlaylistDetailSkeleton() {
       </div>
 
       <div className="glass-card rounded-3xl border border-white/10 p-5">
-        <div className="flex items-center gap-3">
-          <Skeleton className="size-11 rounded-full" />
+      <div className="grid grid-cols-[2.75rem_minmax(0,1fr)] items-center gap-3">
+        <Skeleton className="size-11 shrink-0 rounded-full" />
           <div className="space-y-2">
             <Skeleton className="h-4 w-40" />
             <Skeleton className="h-3 w-48" />
@@ -80,11 +80,11 @@ function PlaylistUnavailableCard() {
 function ShuffleUnavailableCard() {
   return (
     <Card className="glass-card sticky top-24 rounded-3xl p-5">
-      <div className="flex items-center gap-3">
-        <div className="flex size-11 items-center justify-center rounded-full bg-white/[0.06] text-muted-foreground">
-          <LockKeyhole className="size-5" />
-        </div>
-        <div>
+      <div className="grid grid-cols-[2.75rem_minmax(0,1fr)] items-center gap-3">
+        <span className="inline-flex size-11 shrink-0 items-center justify-center rounded-full bg-white/[0.06] text-muted-foreground">
+          <LockKeyhole className="size-5 shrink-0" aria-hidden />
+        </span>
+        <div className="min-w-0">
           <h2 className="font-semibold tracking-[-0.02em]">Playlist items unavailable</h2>
           <p className="text-sm text-muted-foreground">
             Spotify only lets this app read tracks from playlists you own or collaborate on.

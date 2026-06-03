@@ -34,8 +34,8 @@ export default function Loading() {
         </div>
 
         <div className="glass-card rounded-3xl border border-white/10 p-5">
-          <div className="flex items-center gap-3">
-            <Skeleton className="size-11 rounded-full" />
+          <div className="grid grid-cols-[2.75rem_minmax(0,1fr)] items-center gap-3">
+            <Skeleton className="size-11 shrink-0 rounded-full" />
             <div className="space-y-2">
               <Skeleton className="h-4 w-40" />
               <Skeleton className="h-3 w-48" />

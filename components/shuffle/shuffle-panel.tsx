@@ -84,12 +84,12 @@ export function ShufflePanel({
   }, [state]);
 
   return (
-    <div className="glass-card sticky top-24 rounded-3xl border border-white/10 p-5">
-      <div className="flex items-center gap-3">
-        <div className="flex size-11 items-center justify-center rounded-full bg-primary/15 text-primary">
-          <Shuffle className="size-5" />
-        </div>
-        <div>
+    <div className="glass-card sticky top-24 self-start rounded-3xl border border-white/10 p-5">
+      <div className="grid grid-cols-[2.75rem_minmax(0,1fr)] items-center gap-3">
+        <span className="inline-flex size-11 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+          <Shuffle className="size-5 shrink-0" aria-hidden />
+        </span>
+        <div className="min-w-0">
           <h2 className="font-semibold tracking-[-0.02em]">Shuffle this playlist</h2>
           <p className="text-sm text-muted-foreground">
             Create a new playlist without changing the original.

@@ -10,115 +10,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { PlaylistDetails, TrackSummary } from "@/lib/spotify/types";
-
-const CACHE_VERSION = 1;
-const CACHE_PREFIX = "shuffle-studio:playlist-detail";
-
-type PlaylistDetailCacheEntry = {
-  version: typeof CACHE_VERSION;
-  userId: string;
-  playlistId: string;
-  savedAt: number;
-  playlist: PlaylistDetails;
-  tracks: TrackSummary[];
-};
-
-type PlaylistDetailApiResponse = {
-  playlist: PlaylistDetails;
-  tracks: TrackSummary[];
-};
-
-const memoryCache = new Map<string, PlaylistDetailCacheEntry>();
-
-function getCacheKey(userId: string, playlistId: string) {
-  return `${CACHE_PREFIX}:${userId}:${playlistId}:v${CACHE_VERSION}`;
-}
-
-function readCachedPlaylistDetail(
-  userId: string,
-  playlistId: string,
-): PlaylistDetailCacheEntry | null {
-  const key = getCacheKey(userId, playlistId);
-  const inMemory = memoryCache.get(key);
-
-  if (inMemory) {
-    return inMemory;
-  }
-
-  try {
-    const raw = window.sessionStorage.getItem(key);
-
-    if (!raw) {
-      return null;
-    }
-
-    const parsed = JSON.parse(raw) as PlaylistDetailCacheEntry;
-
-    if (
-      parsed.version !== CACHE_VERSION ||
-      parsed.userId !== userId ||
-      parsed.playlistId !== playlistId ||
-      !parsed.playlist ||
-      !Array.isArray(parsed.tracks)
-    ) {
-      window.sessionStorage.removeItem(key);
-      return null;
-    }
-
-    memoryCache.set(key, parsed);
-    return parsed;
-  } catch {
-    window.sessionStorage.removeItem(key);
-    return null;
-  }
-}
-
-function writeCachedPlaylistDetail(
-  userId: string,
-  playlistId: string,
-  playlist: PlaylistDetails,
-  tracks: TrackSummary[],
-) {
-  const key = getCacheKey(userId, playlistId);
-  const entry: PlaylistDetailCacheEntry = {
-    version: CACHE_VERSION,
-    userId,
-    playlistId,
-    savedAt: Date.now(),
-    playlist,
-    tracks,
-  };
-
-  memoryCache.set(key, entry);
-
-  try {
-    window.sessionStorage.setItem(key, JSON.stringify(entry));
-  } catch {
-    // Keep the in-memory cache when storage is unavailable or full.
-  }
-
-  return entry;
-}
-
-function clearCachedPlaylistDetail(userId: string, playlistId: string) {
-  const key = getCacheKey(userId, playlistId);
-
-  memoryCache.delete(key);
-
-  try {
-    window.sessionStorage.removeItem(key);
-  } catch {
-    // Ignore storage failures while clearing a best-effort cache.
-  }
-}
-
-function detailChanged(
-  current: { playlist: PlaylistDetails; tracks: TrackSummary[] },
-  next: { playlist: PlaylistDetails; tracks: TrackSummary[] },
-) {
-  return JSON.stringify(current) !== JSON.stringify(next);
-}
+import {
+  clearCachedPlaylistDetail,
+  fetchPlaylistDetail,
+  playlistDetailChanged,
+  readCachedPlaylistDetail,
+  type PlaylistDetailData,
+} from "@/lib/playlists/playlist-detail-cache";
 
 function PlaylistDetailSkeleton() {
   return (
@@ -201,11 +99,6 @@ function ShuffleUnavailableCard() {
   );
 }
 
-type PlaylistDetailState = {
-  playlist: PlaylistDetails;
-  tracks: TrackSummary[];
-};
-
 export function PlaylistDetailView({
   playlistId,
   userId,
@@ -213,7 +106,7 @@ export function PlaylistDetailView({
   playlistId: string;
   userId: string | null;
 }) {
-  const [detail, setDetail] = useState<PlaylistDetailState | null>(null);
+  const [detail, setDetail] = useState<PlaylistDetailData | null>(null);
   const [hasLoadedFromCache, setHasLoadedFromCache] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [needsReconnect, setNeedsReconnect] = useState(false);
@@ -233,30 +126,33 @@ export function PlaylistDetailView({
       }
 
       try {
-        const response = await fetch(`/api/playlists/${playlistId}`, {
-          cache: "no-store",
-          headers: {
-            Accept: "application/json",
-          },
-        });
+        const result = await fetchPlaylistDetail(userId, playlistId);
 
-        if (response.status === 401) {
-          clearCachedPlaylistDetail(userId, playlistId);
-          setDetail(null);
-          setError("Your Spotify session expired. Reconnect Spotify to load this playlist.");
-          setNeedsReconnect(true);
-          return;
-        }
+        if (!result.ok) {
+          if (result.status === 401) {
+            clearCachedPlaylistDetail(userId, playlistId);
+            setDetail(null);
+            setError("Your Spotify session expired. Reconnect Spotify to load this playlist.");
+            setNeedsReconnect(true);
+            return;
+          }
 
-        if (!response.ok) {
+          const cached = readCachedPlaylistDetail(userId, playlistId);
+
+          if (cached) {
+            setDetail((current) =>
+              !current || playlistDetailChanged(current, cached) ? cached : current,
+            );
+            setError("Couldn’t refresh this playlist. Showing the last saved version.");
+            setNeedsReconnect(false);
+            return;
+          }
+
           throw new Error("Unable to refresh playlist.");
         }
 
-        const data = (await response.json()) as PlaylistDetailApiResponse;
-        writeCachedPlaylistDetail(userId, playlistId, data.playlist, data.tracks);
-
         setDetail((current) =>
-          !current || detailChanged(current, data) ? data : current,
+          !current || playlistDetailChanged(current, result.data) ? result.data : current,
         );
         setError(null);
         setNeedsReconnect(false);
@@ -287,7 +183,7 @@ export function PlaylistDetailView({
       const cached = readCachedPlaylistDetail(userId, playlistId);
 
       if (cached) {
-        setDetail({ playlist: cached.playlist, tracks: cached.tracks });
+        setDetail(cached);
         setHasLoadedFromCache(true);
       } else {
         setDetail(null);

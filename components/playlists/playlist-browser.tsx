@@ -266,7 +266,7 @@ export function PlaylistBrowser({ userId }: { userId: string | null }) {
       ) : filtered.length > 0 ? (
         <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
           {filtered.map((playlist) => (
-            <PlaylistCard key={playlist.id} playlist={playlist} />
+            <PlaylistCard key={playlist.id} playlist={playlist} userId={userId} />
           ))}
         </div>
       ) : (

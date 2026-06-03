@@ -243,9 +243,11 @@ async function spotifyFetch<T>(
   if (!response.ok) {
     const retryAfter = response.headers.get("retry-after");
     const suffix = retryAfter ? ` Try again in ${retryAfter} seconds.` : "";
+    const errorBody = await response.text().catch(() => "");
+    const details = errorBody ? ` ${errorBody.slice(0, 240)}` : "";
 
     throw new SpotifyApiError(
-      `Spotify API request failed (${response.status}).${suffix}`,
+      `Spotify API request failed (${response.status}) for ${init?.method ?? "GET"} ${path}.${suffix}${details}`,
       response.status,
     );
   }
@@ -358,10 +360,8 @@ export async function createPlaylist(
   isPublic: boolean,
   description: string,
 ) {
-  const session = await getAuthorizedSession({ persistRefresh: true });
-
   return spotifyFetch<CreatedPlaylist>(
-    `/users/${session.user.id}/playlists`,
+    "/me/playlists",
     {
       method: "POST",
       body: JSON.stringify({

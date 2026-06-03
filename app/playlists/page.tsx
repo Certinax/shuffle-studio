@@ -2,21 +2,21 @@ import type { Metadata } from "next";
 
 import { PlaylistBrowser } from "@/components/playlists/playlist-browser";
 import { PageContainer } from "@/components/shell/page-container";
-import { getUserPlaylists } from "@/lib/spotify/client";
+import { getPublicSession } from "@/lib/session";
 
 export const metadata: Metadata = {
   title: "Playlists",
 };
 
 export default async function PlaylistsPage() {
-  const playlists = await getUserPlaylists();
+  const session = await getPublicSession();
 
   return (
     <PageContainer>
       <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-sm font-medium text-primary">Your Spotify catalog</p>
-          <h1 className="mt-2 text-4xl font-semibold tracking-[-0.05em]">
+          <h1 className="mt-2 text-4xl font-semibold tracking-tighter">
             Pick a playlist to shuffle
           </h1>
         </div>
@@ -25,7 +25,7 @@ export default async function PlaylistsPage() {
         </p>
       </div>
 
-      <PlaylistBrowser playlists={playlists} />
+      <PlaylistBrowser userId={session?.user.id ?? null} />
     </PageContainer>
   );
 }

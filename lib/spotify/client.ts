@@ -33,6 +33,9 @@ type SpotifyPlaylist = {
   tracks?: {
     total: number;
   };
+  items?: {
+    total: number;
+  };
   external_urls?: {
     spotify?: string;
   };
@@ -246,7 +249,7 @@ function toPlaylistSummary(playlist: SpotifyPlaylist): PlaylistSummary {
     isPublic: playlist.public ?? null,
     imageUrl: playlist.images?.[0]?.url,
     ownerName: playlist.owner?.display_name || "Spotify",
-    trackCount: playlist.tracks?.total ?? 0,
+    trackCount: playlist.items?.total ?? playlist.tracks?.total ?? 0,
     spotifyUrl: playlist.external_urls?.spotify ?? `https://open.spotify.com/playlist/${playlist.id}`,
   };
 }
@@ -285,7 +288,7 @@ export const getUserPlaylists = cache(async () => {
 
 export const getPlaylistDetails = cache(async (playlistId: string) => {
   const playlist = await spotifyFetch<SpotifyPlaylist>(
-    `/playlists/${playlistId}?fields=id,name,description,public,images,owner(id,display_name),tracks(total),external_urls`,
+    `/playlists/${playlistId}?fields=id,name,description,public,images,owner(id,display_name),items(total),tracks(total),external_urls`,
   );
 
   return toPlaylistDetails(playlist);

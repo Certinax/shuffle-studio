@@ -36,7 +36,11 @@ export function PlaylistCard({ playlist }: { playlist: PlaylistSummary }) {
           <div className="flex items-center justify-between gap-2">
             <Badge>{playlist.trackCount.toLocaleString()} tracks</Badge>
             <span className="text-xs text-muted-foreground">
-              {playlist.isPublic ? "Public" : "Private"}
+              {!playlist.canReadItems
+                ? "View only"
+                : playlist.isPublic
+                  ? "Public"
+                  : "Private"}
             </span>
           </div>
         </div>

@@ -23,6 +23,7 @@ type SpotifyPaging<T> = {
 type SpotifyPlaylist = {
   id: string;
   name: string;
+  collaborative?: boolean;
   description?: string | null;
   public?: boolean | null;
   images?: SpotifyImage[];
@@ -241,7 +242,13 @@ async function spotifyFetch<T>(
   return (await response.json()) as T;
 }
 
-function toPlaylistSummary(playlist: SpotifyPlaylist): PlaylistSummary {
+function toPlaylistSummary(
+  playlist: SpotifyPlaylist,
+  currentUserId?: string,
+): PlaylistSummary {
+  const ownerId = playlist.owner?.id ?? "";
+  const isCollaborative = playlist.collaborative === true;
+
   return {
     id: playlist.id,
     name: playlist.name,
@@ -249,16 +256,19 @@ function toPlaylistSummary(playlist: SpotifyPlaylist): PlaylistSummary {
     isPublic: playlist.public ?? null,
     imageUrl: playlist.images?.[0]?.url,
     ownerName: playlist.owner?.display_name || "Spotify",
+    ownerId,
+    isCollaborative,
+    canReadItems: Boolean(currentUserId && (ownerId === currentUserId || isCollaborative)),
     trackCount: playlist.items?.total ?? playlist.tracks?.total ?? 0,
     spotifyUrl: playlist.external_urls?.spotify ?? `https://open.spotify.com/playlist/${playlist.id}`,
   };
 }
 
-function toPlaylistDetails(playlist: SpotifyPlaylist): PlaylistDetails {
-  return {
-    ...toPlaylistSummary(playlist),
-    ownerId: playlist.owner?.id ?? "",
-  };
+function toPlaylistDetails(
+  playlist: SpotifyPlaylist,
+  currentUserId?: string,
+): PlaylistDetails {
+  return toPlaylistSummary(playlist, currentUserId);
 }
 
 async function getAllPages<T>(path: string) {
@@ -281,22 +291,24 @@ export const getCurrentSessionUser = cache(async () => {
 });
 
 export const getUserPlaylists = cache(async () => {
+  const session = await getAuthorizedSession();
   const playlists = await getAllPages<SpotifyPlaylist>("/me/playlists?limit=50");
 
-  return playlists.map(toPlaylistSummary);
+  return playlists.map((playlist) => toPlaylistSummary(playlist, session.user.id));
 });
 
 export const getPlaylistDetails = cache(async (playlistId: string) => {
+  const session = await getAuthorizedSession();
   const playlist = await spotifyFetch<SpotifyPlaylist>(
-    `/playlists/${playlistId}?fields=id,name,description,public,images,owner(id,display_name),items(total),tracks(total),external_urls`,
+    `/playlists/${playlistId}?fields=id,name,collaborative,description,public,images,owner(id,display_name),items(total),tracks(total),external_urls`,
   );
 
-  return toPlaylistDetails(playlist);
+  return toPlaylistDetails(playlist, session.user.id);
 });
 
 export const getPlaylistTracks = cache(async (playlistId: string) => {
   const items = await getAllPages<SpotifyPlaylistTrackItem>(
-    `/playlists/${playlistId}/tracks?limit=100&additional_types=track&fields=items(track(id,name,uri,is_local,duration_ms,artists(name),album(name,images))),next`,
+    `/playlists/${playlistId}/items?limit=50&additional_types=track&fields=items(track(id,name,uri,is_local,duration_ms,artists(name),album(name,images))),next`,
   );
 
   return items

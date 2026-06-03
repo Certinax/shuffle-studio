@@ -47,8 +47,17 @@ export async function shufflePlaylist(
   }
 
   try {
-    const [playlist, playlists, tracks] = await Promise.all([
-      getPlaylistDetails(parsed.data.playlistId),
+    const playlist = await getPlaylistDetails(parsed.data.playlistId);
+
+    if (!playlist.canReadItems) {
+      return {
+        status: "error",
+        message:
+          "Spotify only lets this app read tracks from playlists you own or collaborate on.",
+      };
+    }
+
+    const [playlists, tracks] = await Promise.all([
       getUserPlaylists(),
       getPlaylistTracks(parsed.data.playlistId),
     ]);

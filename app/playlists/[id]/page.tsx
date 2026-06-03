@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowLeft, ExternalLink, Music2 } from "lucide-react";
+import { ArrowLeft, ExternalLink, LockKeyhole, Music2 } from "lucide-react";
 
 import { ShufflePanel } from "@/components/shuffle/shuffle-panel";
 import { PageContainer } from "@/components/shell/page-container";
 import { TrackList } from "@/components/tracks/track-list";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import {
   getPlaylistDetails,
   getPlaylistTracks,
@@ -29,9 +30,8 @@ export async function generateMetadata({
 
 export default async function PlaylistPage({ params }: PlaylistPageProps) {
   const { id } = await params;
-  const playlistPromise = getPlaylistDetails(id);
-  const tracksPromise = getPlaylistTracks(id);
-  const [playlist, tracks] = await Promise.all([playlistPromise, tracksPromise]);
+  const playlist = await getPlaylistDetails(id);
+  const tracks = playlist.canReadItems ? await getPlaylistTracks(id) : [];
 
   return (
     <PageContainer>
@@ -86,10 +86,45 @@ export default async function PlaylistPage({ params }: PlaylistPageProps) {
             </div>
           </div>
 
-          <TrackList tracks={tracks} />
+          {playlist.canReadItems ? (
+            <TrackList tracks={tracks} />
+          ) : (
+            <Card className="flex min-h-72 items-center justify-center rounded-3xl border-dashed bg-white/[0.03] p-10 text-center">
+              <div>
+                <LockKeyhole className="mx-auto size-8 text-muted-foreground" />
+                <p className="mt-3 font-medium">Spotify blocks item access here</p>
+                <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">
+                  The playlist can be listed, but Spotify only exposes its tracks to
+                  apps when the authenticated user owns the playlist or is a collaborator.
+                </p>
+              </div>
+            </Card>
+          )}
         </div>
 
-        <ShufflePanel playlist={playlist} trackCount={tracks.length} />
+        {playlist.canReadItems ? (
+          <ShufflePanel playlist={playlist} trackCount={tracks.length} />
+        ) : (
+          <Card className="glass-card sticky top-24 rounded-3xl p-5">
+            <div className="flex items-center gap-3">
+              <div className="flex size-11 items-center justify-center rounded-full bg-white/[0.06] text-muted-foreground">
+                <LockKeyhole className="size-5" />
+              </div>
+              <div>
+                <h2 className="font-semibold tracking-[-0.02em]">
+                  Playlist items unavailable
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  Spotify only lets this app read tracks from playlists you own or collaborate on.
+                </p>
+              </div>
+            </div>
+            <p className="mt-5 text-sm leading-6 text-muted-foreground">
+              You can still open this playlist in Spotify, but Shuffle Studio cannot
+              create a shuffled copy from followed playlists owned by someone else.
+            </p>
+          </Card>
+        )}
       </section>
     </PageContainer>
   );

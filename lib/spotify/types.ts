@@ -11,13 +11,14 @@ export type PlaylistSummary = {
   isPublic: boolean | null;
   imageUrl?: string;
   ownerName: string;
+  ownerId: string;
+  isCollaborative: boolean;
+  canReadItems: boolean;
   trackCount: number;
   spotifyUrl: string;
 };
 
-export type PlaylistDetails = PlaylistSummary & {
-  ownerId: string;
-};
+export type PlaylistDetails = PlaylistSummary;
 
 export type TrackSummary = {
   id: string;

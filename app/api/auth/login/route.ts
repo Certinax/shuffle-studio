@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { getEnv, getRedirectUri } from "@/lib/env";
+import { getRequestOrigin } from "@/lib/request-url";
 import { createOAuthState } from "@/lib/session";
 
 const scopes = [
@@ -14,9 +15,7 @@ const scopes = [
 export async function GET(request: NextRequest) {
   const redirectUri = getRedirectUri();
   const callbackOrigin = new URL(redirectUri).origin;
-  const host = request.headers.get("host");
-  const protocol = request.headers.get("x-forwarded-proto") ?? "http";
-  const requestOrigin = host ? `${protocol}://${host}` : new URL(request.url).origin;
+  const requestOrigin = getRequestOrigin(request);
 
   if (requestOrigin !== callbackOrigin) {
     return NextResponse.redirect(new URL("/api/auth/login", callbackOrigin));

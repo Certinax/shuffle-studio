@@ -107,12 +107,6 @@ export async function setSession(
   cookieStore.set(SESSION_COOKIE, encrypted, sessionCookieOptions());
 }
 
-export async function clearSession() {
-  const cookieStore = await cookies();
-
-  cookieStore.delete(SESSION_COOKIE);
-}
-
 export async function createOAuthState() {
   const state = randomBytes(24).toString("hex");
   const cookieStore = await cookies();

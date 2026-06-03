@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { getRequestUrl } from "@/lib/request-url";
 import { exchangeCodeForSession } from "@/lib/spotify/client";
 import { consumeOAuthState, setSession } from "@/lib/session";
 
@@ -10,17 +11,17 @@ export async function GET(request: NextRequest) {
   const isValidState = await consumeOAuthState(state);
 
   if (!code || !isValidState) {
-    return NextResponse.redirect(new URL("/?auth=failed", request.url));
+    return NextResponse.redirect(getRequestUrl(request, "/?auth=failed"));
   }
 
   try {
     const session = await exchangeCodeForSession(code);
-    const response = NextResponse.redirect(new URL("/playlists", request.url));
+    const response = NextResponse.redirect(getRequestUrl(request, "/playlists"));
 
     await setSession(session, response);
 
     return response;
   } catch {
-    return NextResponse.redirect(new URL("/?auth=failed", request.url));
+    return NextResponse.redirect(getRequestUrl(request, "/?auth=failed"));
   }
 }

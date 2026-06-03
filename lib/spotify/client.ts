@@ -43,8 +43,9 @@ type SpotifyPlaylist = {
 };
 
 type SpotifyPlaylistTrackItem = {
-  track: {
+  item?: {
     id: string;
+    type?: string;
     name: string;
     uri: string;
     is_local?: boolean;
@@ -55,6 +56,20 @@ type SpotifyPlaylistTrackItem = {
       images?: SpotifyImage[];
     };
   } | null;
+  track?: {
+    id: string;
+    type?: string;
+    name: string;
+    uri: string;
+    is_local?: boolean;
+    duration_ms: number;
+    artists?: Array<{ name: string }>;
+    album?: {
+      name: string;
+      images?: SpotifyImage[];
+    };
+  } | null;
+  is_local?: boolean;
 };
 
 type SpotifyProfile = {
@@ -308,14 +323,20 @@ export const getPlaylistDetails = cache(async (playlistId: string) => {
 
 export const getPlaylistTracks = cache(async (playlistId: string) => {
   const items = await getAllPages<SpotifyPlaylistTrackItem>(
-    `/playlists/${playlistId}/items?limit=50&additional_types=track&fields=items(track(id,name,uri,is_local,duration_ms,artists(name),album(name,images))),next`,
+    `/playlists/${playlistId}/items?limit=50&additional_types=track&fields=items(is_local,item(id,type,name,uri,is_local,duration_ms,artists(name),album(name,images)),track(id,type,name,uri,is_local,duration_ms,artists(name),album(name,images))),next`,
   );
 
   return items
     .map((item): TrackSummary | null => {
-      const track = item.track;
+      const track = item.item ?? item.track;
 
-      if (!track || track.is_local || !track.uri) {
+      if (
+        !track ||
+        track.type === "episode" ||
+        item.is_local ||
+        track.is_local ||
+        !track.uri
+      ) {
         return null;
       }
 

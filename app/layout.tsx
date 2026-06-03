@@ -17,6 +17,7 @@ const appUrl =
 
 const title = "Shuffle Studio";
 const description = "Create beautifully shuffled Spotify playlists from your own catalog.";
+const socialPreviewImage = "/og-image.png";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -45,7 +46,7 @@ export const metadata: Metadata = {
     siteName: title,
     images: [
       {
-        url: "/opengraph-image",
+        url: socialPreviewImage,
         width: 1200,
         height: 630,
         alt: "Shuffle Studio green shuffle icon on a dark gradient background",
@@ -57,7 +58,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title,
     description,
-    images: ["/opengraph-image"],
+    images: [socialPreviewImage],
   },
 };
 
